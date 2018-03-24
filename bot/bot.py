@@ -74,7 +74,8 @@ class GameBot:
         # Reply with word calculated in last session
         try:
             self.next_words[chat_id] = self.backend_of_user[chat_id].get_next_word(user_input, computer_word)
-            bot.send_message(chat_id=chat_id, text=computer_word)
+            response = "*Bot:* %s  *Du:* %s" % (computer_word, user_input)
+            bot.send_message(chat_id=chat_id, text=response, parse_mode=telegram.ParseMode.MARKDOWN)
         except KeyError:
             bot.send_message(chat_id=chat_id, text="Please enter a new word, I don't know yours")
 
