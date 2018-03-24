@@ -1,0 +1,3 @@
+gensim
+requests
+python-telegram-bot
