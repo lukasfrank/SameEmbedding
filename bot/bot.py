@@ -20,11 +20,12 @@ class GameBot:
         self.bot = telegram.Bot(token=token)
         self.updater = Updater(token=token)
         self.dispatcher = self.updater.dispatcher
-        self.dispatcher = self.updater.dispatcher
-        self.backend = GensimBackend()
 
         # collect next word per chat_id
         self.next_words = {}
+
+        # saves backends of users
+        self.backend_of_user = {}
 
         # Handle regular text messages
         self.text_handler = MessageHandler(Filters.text, self.message_reply)
@@ -53,7 +54,9 @@ class GameBot:
         bot.send_message(chat_id=update.message.chat_id,
                          text="Hey, I'm your game partner. Start by typing your initial word.")
 
-        random_word = self.backend.get_random_word()
+        self.backend_of_user[update.message.chat_id] = GensimBackend()
+
+        random_word = self.backend_of_user[update.message.chat_id].get_random_word()
         self.next_words[update.message.chat_id] = random_word
         logger.info("Intialized new chat with %s id and random word %s" % (update.message.chat_id,
                                                                            random_word))
@@ -70,17 +73,17 @@ class GameBot:
 
         # Reply with word calculated in last session
         try:
-            self.next_words[chat_id] = self.backend.get_next_word(user_input, computer_word)
+            self.next_words[chat_id] = self.backend_of_user[chat_id].get_next_word(user_input, computer_word)
             bot.send_message(chat_id=chat_id, text=computer_word)
         except KeyError:
             bot.send_message(chat_id=chat_id, text="Please enter a new word, I don't know yours")
-
 
     def restart(self, bot, update):
         bot.send_message(chat_id=update.message.chat_id,
                          text="Alright, let's play again!")
 
-        random_word = self.backend.get_random_word()
+        self.backend_of_user[update.message.chat_id] = GensimBackend()
+        random_word = self.backend_of_user[update.message.chat_id].get_random_word()
         self.next_words[update.message.chat_id] = random_word
         logger.info("Restarted game with %s id and random word %s" % (update.message.chat_id,
                                                                       random_word))
