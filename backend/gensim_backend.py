@@ -39,7 +39,8 @@ class GensimBackend:
             logger.warning("%s or %s not found" % (user_word, computer_word))
             raise KeyError
 
-        word_list = word_vectors.most_similar(positive=[user_word, computer_word], restrict_vocab=30000)
+        # Check weighting
+        word_list = word_vectors.most_similar(positive=[(user_word, 2.0), (computer_word, 1)], restrict_vocab=10000)
         logger.info(word_list)
 
         for word, similarity in word_list:
