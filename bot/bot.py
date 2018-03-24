@@ -32,6 +32,10 @@ class GameBot:
         # Initial start command
         self.start_handler = CommandHandler('start', self.start)
         self.dispatcher.add_handler(self.start_handler)
+
+        self.restart_handler = CommandHandler('restart', self.restart)
+        self.dispatcher.add_handler(self.restart_handler)
+
         self.dispatcher.add_handler(self.text_handler)
 
         self.updater.start_polling()
@@ -65,8 +69,21 @@ class GameBot:
         computer_word = self.next_words[chat_id]
 
         # Reply with word calculated in last session
-        bot.send_message(chat_id=chat_id, text=computer_word)
-        self.next_words[chat_id] = self.backend.get_next_word(user_input, computer_word)
+        try:
+            self.next_words[chat_id] = self.backend.get_next_word(user_input, computer_word)
+            bot.send_message(chat_id=chat_id, text=computer_word)
+        except KeyError:
+            bot.send_message(chat_id=chat_id, text="Please enter a new word, I don't know yours")
+
+
+    def restart(self, bot, update):
+        bot.send_message(chat_id=update.message.chat_id,
+                         text="Alright, let's play again!")
+
+        random_word = self.backend.get_random_word()
+        self.next_words[update.message.chat_id] = random_word
+        logger.info("Restarted game with %s id and random word %s" % (update.message.chat_id,
+                                                                      random_word))
 
 
 def main():

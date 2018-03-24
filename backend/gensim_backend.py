@@ -36,9 +36,10 @@ class GensimBackend:
             word_vectors.get_vector(user_word)
             word_vectors.get_vector(computer_word)
         except KeyError:
-            return None
+            logger.warning("%s or %s not found" % (user_word, computer_word))
+            raise KeyError
 
-        word_list = word_vectors.most_similar(positive=[user_word, computer_word])
+        word_list = word_vectors.most_similar(positive=[user_word, computer_word], restrict_vocab=30000)
         logger.info(word_list)
 
         for word, similarity in word_list:
