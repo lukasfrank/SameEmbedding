@@ -3,6 +3,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import logging
 
 from backend.base_backend import BaseBackend
+from backend.gensim_backend import GensimBackend
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -20,7 +21,7 @@ class GameBot:
         self.updater = Updater(token=token)
         self.dispatcher = self.updater.dispatcher
         self.dispatcher = self.updater.dispatcher
-        self.backend = BaseBackend()
+        self.backend = GensimBackend()
 
         # collect next word per chat_id
         self.next_words = {}

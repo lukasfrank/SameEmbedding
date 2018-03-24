@@ -1,10 +1,18 @@
 from gensim.models import KeyedVectors
 import random
-word_vectors = KeyedVectors.load_word2vec_format('../data/german.model', binary=True)
+import logging
+
+word_vectors = KeyedVectors.load_word2vec_format('data/german.model', binary=True)
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 
 class GensimBackend:
     def __init__(self):
+        logger.info("Constructed new gensim backend")
+
         self.word_blacklist = []
 
     def get_random_word(self):
@@ -31,8 +39,9 @@ class GensimBackend:
             return None
 
         word_list = word_vectors.most_similar(positive=[user_word, computer_word])
+        logger.info(word_list)
 
         for word, similarity in word_list:
-            if word not in self.world_blacklist:
+            if word.lower() not in self.word_blacklist:
                 return word
 
