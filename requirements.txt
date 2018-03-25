@@ -2,3 +2,4 @@ gensim
 requests
 python-telegram-bot
 matplotlib
+Pillow

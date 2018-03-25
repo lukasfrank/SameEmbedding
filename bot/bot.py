@@ -1,6 +1,7 @@
 import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import logging
+from io import BytesIO
 
 from backend.base_backend import BaseBackend
 from backend.gensim_backend import GensimBackend
@@ -37,6 +38,9 @@ class GameBot:
         self.restart_handler = CommandHandler('restart', self.restart)
         self.dispatcher.add_handler(self.restart_handler)
 
+        self.tsne_handler = CommandHandler('viz', self.send_tsne)
+        self.dispatcher.add_handler(self.tsne_handler)
+
         self.dispatcher.add_handler(self.text_handler)
 
         self.updater.start_polling()
@@ -52,7 +56,9 @@ class GameBot:
         :return:
         """
         bot.send_message(chat_id=update.message.chat_id,
-                         text="Hey, I'm your game partner. Start by typing your initial word.")
+                         text="Hey, I'm your game partner. We are both trying to guess the same word." +
+                              " Start by typing your initial word and I'll reply with my guess." +
+                              " If you are stuck you can restart with /restart")
 
         self.backend_of_user[update.message.chat_id] = GensimBackend()
 
@@ -73,11 +79,31 @@ class GameBot:
 
         # Reply with word calculated in last session
         try:
-            self.next_words[chat_id] = self.backend_of_user[chat_id].get_next_word(user_input, computer_word)
-            response = "*Bot:* %s  *Du:* %s" % (computer_word.replace("_", " "), user_input.replace("_", " "))
+            if computer_word == user_input:
+                # you won and will get an image of the word embedding
+                bot.send_message(chat_id=chat_id, text="You won! Good job.")
+                self.send_tsne(bot, update, computer_word)
+                return
+
+            # Calculate next_word before creating output as we could still fail here
+            next_word = self.backend_of_user[chat_id].get_next_word(user_input, computer_word)
+            self.next_words[chat_id] = next_word
+
+            response = "*Bot:* %s  *Du:* %s" % (computer_word.replace("_", " "), user_input.replace("_"," "))
             bot.send_message(chat_id=chat_id, text=response, parse_mode=telegram.ParseMode.MARKDOWN)
+
         except KeyError:
             bot.send_message(chat_id=chat_id, text="Please enter a new word, I don't know yours")
+
+    def send_tsne(self, bot, update, final_word=None):
+        chat_id = update.effective_chat.id
+        fig, ax = self.backend_of_user[chat_id].tsne_embedding(final_word)
+
+        bio = BytesIO()
+        bio.name = 'image.jpeg'
+        fig.savefig(bio)
+        bio.seek(0)
+        bot.send_photo(chat_id, photo=bio)
 
     def restart(self, bot, update):
         bot.send_message(chat_id=update.message.chat_id,
