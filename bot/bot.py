@@ -1,10 +1,16 @@
 import telegram
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 import logging
 from io import BytesIO
 
-from backend.base_backend import BaseBackend
 from backend.gensim_backend import GensimBackend
+from backend.fasttext_backend import FasttextBackend
+
+BACKENDS = {
+    "gensim": GensimBackend,
+#    "fasttext": FasttextBackend
+}
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -43,6 +49,8 @@ class GameBot:
 
         self.dispatcher.add_handler(self.text_handler)
 
+        self.updater.dispatcher.add_handler(CallbackQueryHandler(self.switch_backend_callback))
+
         self.updater.start_polling()
         self.updater.idle()
 
@@ -60,12 +68,11 @@ class GameBot:
                               " Start by typing your initial word and I'll reply with my guess." +
                               " If you are stuck you can restart with /restart")
 
-        self.backend_of_user[update.message.chat_id] = GensimBackend()
-
-        random_word = self.backend_of_user[update.message.chat_id].get_random_word()
-        self.next_words[update.message.chat_id] = random_word
-        logger.info("Intialized new chat with %s id and random word %s" % (update.message.chat_id,
-                                                                           random_word))
+        keyboard = [[InlineKeyboardButton("gensim", callback_data='gensim')],
+                    [InlineKeyboardButton("fasttext", callback_data='fasttext')]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        bot.send_message(chat_id=update.message.chat_id, text="Please select backend",
+                         reply_markup=reply_markup)
 
     def message_reply(self, bot, update):
         """
@@ -106,13 +113,25 @@ class GameBot:
         bot.send_photo(chat_id, photo=bio)
 
     def restart(self, bot, update):
-        bot.send_message(chat_id=update.message.chat_id,
-                         text="Alright, let's play again!")
+        chat_id = update.effective_chat.id
+        keyboard = [[InlineKeyboardButton("gensim", callback_data='gensim')],
+                    [InlineKeyboardButton("fasttext", callback_data='fasttext')]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        bot.send_message(chat_id=chat_id, text="Please select backend",
+                         reply_markup=reply_markup)
 
-        self.backend_of_user[update.message.chat_id] = GensimBackend()
-        random_word = self.backend_of_user[update.message.chat_id].get_random_word()
-        self.next_words[update.message.chat_id] = random_word
-        logger.info("Restarted game with %s id and random word %s" % (update.message.chat_id,
+    def switch_backend_callback(self, bot, update):
+        query = update.callback_query
+        chat_id = query.message.chat_id
+
+        bot.edit_message_text(text="Selected option: {}".format(query.data),
+                              chat_id=chat_id,
+                              message_id=query.message.message_id)
+
+        self.backend_of_user[chat_id] = BACKENDS[query.data]()
+        random_word = self.backend_of_user[chat_id].get_random_word()
+        self.next_words[chat_id] = random_word
+        logger.info("Restarted game with %s id and random word %s" % (chat_id,
                                                                       random_word))
 
 
