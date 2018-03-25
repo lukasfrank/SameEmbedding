@@ -64,12 +64,18 @@ class GensimBackend:
             if word.lower() not in self.word_blacklist:
                 return word
 
-    def tsne_embedding(self):
+    def tsne_embedding(self, final_word=None):
         """
         Calculate t-SNE embedding.
 
         :return: matplotlib
         """
+        self.user_history_words.append(final_word)
+        self.computer_history_words.append(final_word)
+
+        self.user_history_vecs.append(word_vectors.get_vector(final_word))
+        self.computer_history_vecs.append(word_vectors.get_vector(final_word))
+
         tsne_proj = self.tsne_model.fit_transform(np.concatenate((self.user_history_vecs, self.computer_history_vecs)))
         vec_size = len(self.user_history_vecs)
         fig, ax = plt.subplots(1, 1)
@@ -84,4 +90,4 @@ class GensimBackend:
             ax.text(tsne_proj[vec_size + i, 0], tsne_proj[vec_size + i, 1], str(i) + " " + self.computer_history_words[i])
 
         ax.legend()
-        plt.show()
+        return fig, ax
