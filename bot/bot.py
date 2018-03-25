@@ -9,7 +9,7 @@ from backend.fasttext_backend import FasttextBackend
 
 BACKENDS = {
     "gensim": GensimBackend,
-#    "fasttext": FasttextBackend
+    "fasttext": FasttextBackend
 }
 
 logging.basicConfig(level=logging.INFO,
@@ -124,11 +124,13 @@ class GameBot:
         query = update.callback_query
         chat_id = query.message.chat_id
 
-        bot.edit_message_text(text="Selected option: {}".format(query.data),
+        bot.edit_message_text(text="Selected option: {}. You can start entering your word".format(query.data),
                               chat_id=chat_id,
                               message_id=query.message.message_id)
 
         self.backend_of_user[chat_id] = BACKENDS[query.data]()
+        for k, v in self.backend_of_user.items():
+            logger.info("%s: %s" % (str(k), str(v)))
         random_word = self.backend_of_user[chat_id].get_random_word()
         self.next_words[chat_id] = random_word
         logger.info("Restarted game with %s id and random word %s" % (chat_id,
