@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger(__name__)
 
 
-class GensimBackend:
+class FasttextBackend:
     def __init__(self):
         logger.info("Constructed new gensim backend")
 
