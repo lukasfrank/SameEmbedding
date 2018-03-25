@@ -87,7 +87,7 @@ class GameBot:
             next_word = self.backend_of_user[chat_id].get_next_word(user_input, computer_word)
             self.next_words[chat_id] = next_word
 
-            response = "*Bot:* %s  *Du:* %s" % (computer_word, user_input)
+            response = "*Bot:* %s  *Du:* %s" % (computer_word.replace("_", " "), user_input.replace("_"," "))
             bot.send_message(chat_id=chat_id, text=response, parse_mode=telegram.ParseMode.MARKDOWN)
 
         except KeyError:
