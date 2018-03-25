@@ -56,7 +56,9 @@ class GameBot:
         :return:
         """
         bot.send_message(chat_id=update.message.chat_id,
-                         text="Hey, I'm your game partner. Start by typing your initial word.")
+                         text="Hey, I'm your game partner. We are both trying to guess the same word." +
+                              " Start by typing your initial word and I'll reply with my guess." +
+                              " If you are stuck you can restart with /restart")
 
         self.backend_of_user[update.message.chat_id] = GensimBackend()
 

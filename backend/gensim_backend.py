@@ -70,15 +70,16 @@ class GensimBackend:
 
         :return: matplotlib
         """
-        self.user_history_words.append(final_word)
-        self.computer_history_words.append(final_word)
+        if final_word:
+            self.user_history_words.append(final_word)
+            self.computer_history_words.append(final_word)
 
-        self.user_history_vecs.append(word_vectors.get_vector(final_word))
-        self.computer_history_vecs.append(word_vectors.get_vector(final_word))
+            self.user_history_vecs.append(word_vectors.get_vector(final_word))
+            self.computer_history_vecs.append(word_vectors.get_vector(final_word))
 
         tsne_proj = self.tsne_model.fit_transform(np.concatenate((self.user_history_vecs, self.computer_history_vecs)))
         vec_size = len(self.user_history_vecs)
-        fig, ax = plt.subplots(1, 1)
+        fig, ax = plt.subplots(1, 1, figsize=(20,10))
         ax.scatter(tsne_proj[:vec_size, 0], tsne_proj[:vec_size, 1], color="green", label="user")
         ax.plot(tsne_proj[:vec_size, 0], tsne_proj[:vec_size, 1], color="green", label="user")
         for i in range(vec_size):
