@@ -47,6 +47,9 @@ class GameBot:
         self.tsne_handler = CommandHandler('viz', self.send_tsne)
         self.dispatcher.add_handler(self.tsne_handler)
 
+        self.bot_duel_handler = CommandHandler('duel', self.bot_duel)
+        self.dispatcher.add_handler(self.bot_duel_handler)
+
         self.dispatcher.add_handler(self.text_handler)
 
         self.updater.dispatcher.add_handler(CallbackQueryHandler(self.switch_backend_callback))
@@ -111,6 +114,25 @@ class GameBot:
         fig.savefig(bio)
         bio.seek(0)
         bot.send_photo(chat_id, photo=bio)
+
+    def bot_duel(self, bot, update):
+        chat_id = update.effective_chat.id
+        gensim_bot = GensimBackend()
+        fasttext_bot = FasttextBackend()
+
+        gensim_word = gensim_bot.get_random_word()
+        fasttext_word = fasttext_bot.get_random_word()
+
+        for _ in range(15):
+            bot.send_message(chat_id=chat_id, text="%s | %s" % (gensim_word, fasttext_word))
+
+            try:
+                gensim_word = gensim_bot.get_next_word(gensim_word, fasttext_word)
+                fasttext_word = fasttext_bot.get_next_word(gensim_word, fasttext_word)
+            except KeyError:
+                bot.send_message(chat_id=chat_id, text="The bots got confused. Please start again")
+                break
+
 
     def restart(self, bot, update):
         chat_id = update.effective_chat.id
